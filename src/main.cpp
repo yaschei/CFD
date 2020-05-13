@@ -5,34 +5,37 @@
 #include "Node.h"
 #include "Edge.h"
 #include "Triangle.h"
-#include "Triangulation.h"
 #include "Geometry.h"
+#include "AdvancingFront.h"
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    cout << "Hello World!" << endl;
+    cout << "Begin program" << endl;
 
     Node     *node               = new Node();
     Edge     *edge               = new Edge();
     Triangle *triangle           = new Triangle();
-    Triangulation *triangulation = new Triangulation();
     Geometry *geometry           = new Geometry();
+    AdvancingFront *advFront     = new AdvancingFront();
 
 
-    edge->node              = node;
-    triangle->edge          = edge;
-    triangulation->triangle = triangle;
-    triangulation->node     = node;
-    triangulation->edge     = edge;
-
+    edge->node     = node;
+    triangle->node = node;
+    triangle->edge = edge;
     geometry->node = node;
     geometry->edge = edge;
 
+    advFront->node     = node;
+    advFront->edge     = edge;
+    advFront->triangle = triangle;
+
+    //Read custom geometry file and write it.
     geometry->parseFile("testGeo");
     geometry->writeVTK("testGeo");
 
+    advFront->mesh();
 
 
 
@@ -40,6 +43,7 @@ int main(int argc, char *argv[])
 
 
 
-    cout << "END Hello World!" << endl;
+
+    cout << "END program" << endl;
     return 0;
 }

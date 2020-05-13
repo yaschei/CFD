@@ -11,10 +11,9 @@ void Edge::set(int i, int n0, int n1)
     _n1[i] = n1;
 }
 
-void Edge::set(int i, int n0, int n1, int previous, int next)
+void Edge::set(int i, int current, int previous, int next)
 {
-    _n0[i]       = n0;
-    _n1[i]       = n1;
+    _current[i]  = current;
     _previous[i] = previous;
     _next[i]     = next;
 }
@@ -70,4 +69,13 @@ double Edge::getNodeY(int i, int ni) const
     }
 }
 
+double Edge::length(int i)
+{
+    double x = node->getX(_n1[i]) - node->getX(_n0[i]);
+    double y = node->getY(_n1[i]) - node->getY(_n0[i]);
 
+//    std::cout << i << " : " << _n0[i] << " " << _n1[i] << "***" << std::endl;
+//    std::cout << i << " : " << sqrt(x*x + y*y) << std::endl;
+
+    return sqrt(x*x + y*y);
+}

@@ -1,5 +1,5 @@
 nPoint 11 
-nLoop  3
+nLoop  2
 OUT_loop 2 
 	Side_0 3 0 3 D 0 //nEdgePerSide start end D_dirichlet N_neumann value
 	Side_10 5 3 0 D 2 //nEdgePerSide start end D_dirichlet N_neumann value

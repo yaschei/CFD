@@ -1,6 +1,9 @@
 #ifndef EDGE_H
 #define EDGE_H
 
+#include <iostream>
+#include <math.h>
+
 #include "global.h"
 #include "Node.h"
 
@@ -16,7 +19,7 @@ public:
     int    size() const {return _size;}
 
     void   set(int i, int n0, int n1);
-    void   set(int i, int n0, int n1, int previous, int next);
+    void   set(int i, int current, int previous, int next);
     void   set(int i, int n0, int n1, int elmLeft, int elmRigth, int nodLeft, int nodRight);
     void   setLeftElement(int i, int elmLeft);
     void   setRightElement(int i, int elmRigth);
@@ -30,8 +33,11 @@ public:
     double getNodeX(int i, int ni) const;
     double getNodeY(int i, int ni) const;
 
+    int    getCurrent(int i) const {return _current[i];}
     int    getPrevious(int i) const {return _previous[i];}
     int    getNext(int i)     const {return _next[i];}
+
+    double length(int i);
 
 private:
 
@@ -45,6 +51,7 @@ private:
     int _rightNode         [NMAXNODE];
     int _boundaryCondition [NMAXNODE];
 
+    int _current           [NMAXNODE];
     int _previous          [NMAXNODE];
     int _next              [NMAXNODE];
 

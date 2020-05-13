@@ -8,7 +8,7 @@ SOURCES += main.cpp \
     Edge.cpp \
     Geometry.cpp \
     Triangle.cpp \
-    Triangulation.cpp
+    AdvancingFront.cpp
 
 HEADERS += \
     Node.h \
@@ -16,4 +16,4 @@ HEADERS += \
     Edge.h \
     Geometry.h \
     Triangle.h \
-    Triangulation.h
+    AdvancingFront.h
