@@ -74,8 +74,10 @@ double Edge::length(int i)
     double x = node->getX(_n1[i]) - node->getX(_n0[i]);
     double y = node->getY(_n1[i]) - node->getY(_n0[i]);
 
-//    std::cout << i << " : " << _n0[i] << " " << _n1[i] << "***" << std::endl;
-//    std::cout << i << " : " << sqrt(x*x + y*y) << std::endl;
-
     return sqrt(x*x + y*y);
+}
+
+void Edge::print(int i) const
+{
+    std::cout << "Edge"<< i << "={(" << getNode(i,0) << "," << getNode(i,1) << ")(" << getLeftElement(i) << "," << getRightElement(i) << ")("  << getLeftNode(i) << "," << getRightNode(i) << ")}" << std::endl;
 }

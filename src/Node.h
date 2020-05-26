@@ -1,6 +1,8 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <math.h>
+
 #include "global.h"
 
 class Node
@@ -15,6 +17,8 @@ public:
     double getX(int i) const {return _x[i];}
     double getY(int i) const {return _y[i];}
     int    size()   const {return _size;}
+
+    double distance(int n0, int n1);
 
 private:
 

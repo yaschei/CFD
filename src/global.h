@@ -1,6 +1,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#define OUT   -360
 #define EMPTY -1
 
 #define NMAXNODE   1000

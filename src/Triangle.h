@@ -29,6 +29,8 @@ public:
     bool inCircle(int n0, int n1, int n2, int nodTest);
     bool isAreaPositive(int n0, int n1, int n2);
 
+    void print(int i) const;
+
 private:
 
     int _size;

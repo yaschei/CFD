@@ -2,6 +2,9 @@
 #define ADVANCINGFRONT_H
 
 #include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
 
 #include "global.h"
 #include "Node.h"
@@ -18,6 +21,17 @@ public:
     Triangle *triangle;
 
     void mesh();
+
+    void buildFront(int size, int arrfront[][3], Edge *edge);
+    int  findSmallestEdgeIndex(int size, int arrfront[][3]);
+
+
+
+
+
+    void buildMesh();
+
+
 
     int testcaseA();
     int testcaseB();

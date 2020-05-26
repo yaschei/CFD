@@ -178,3 +178,8 @@ bool Triangle::isAreaPositive(int n0, int n1, int n2)
         return false;
     }
 }
+
+void Triangle::print(int i) const
+{
+    std::cout << "Triangle"<< i << "=(" << getEdge(i,0) << "," << getEdge(i,1) << "," << getEdge(i,2) << ")" << std::endl;
+}

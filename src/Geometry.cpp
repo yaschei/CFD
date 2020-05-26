@@ -44,7 +44,7 @@ int  Geometry::parseFile(std::string filename){
 
             }
 
-            edge->set(count, p1, p2);
+            edge->set(count, p1, p2, EMPTY, OUT, EMPTY, EMPTY);
             edge->set(count, count, count-1, count+1);
             count +=1;
         }
@@ -52,9 +52,9 @@ int  Geometry::parseFile(std::string filename){
     }
 
     //correct first and last edge of the OUT loop
-    edge->set(0, 0, 1);
+    edge->set(0, 0, 1, EMPTY, OUT, EMPTY, EMPTY);
     edge->set(0      , 0, count-1, 1);
-    edge->set(count-1, count-1, end);
+    edge->set(count-1, count-1, end, EMPTY, OUT, EMPTY, EMPTY);
     edge->set(count-1, count-1, count-2, 0);
 
 
@@ -83,7 +83,7 @@ int  Geometry::parseFile(std::string filename){
                         p2 = start + ie+1;
 
                     }
-                    edge->set(count, count, count+1);
+                    edge->set(count, count, count+1, EMPTY, OUT, EMPTY, EMPTY);
                     edge->set(count, count, count-1, count+1);
                     count +=1;
                 }
@@ -93,9 +93,9 @@ int  Geometry::parseFile(std::string filename){
         }
 
         //correct first edge of the IN loops
-        edge->set(end, end, end+1);
+        edge->set(end, end, end+1, EMPTY, OUT, EMPTY, EMPTY);
         edge->set(end, end, count-1, end+1); //end of the side is the start of the side
-        edge->set(count-1, count-1, end);
+        edge->set(count-1, count-1, end, EMPTY, OUT, EMPTY, EMPTY);
         edge->set(count-1, count-1, count-2, end); //last side node is count - 1
 
     }
@@ -108,7 +108,9 @@ int  Geometry::parseFile(std::string filename){
 
    // Read all points
     for (int ipoint = 0; ipoint < nPoints; ipoint++){
+
         inputFile >> x >> y >> strTrash;
+//        std::cout << x << " " << y << std::endl;
         node->set(ipoint, x, y);
     }
 

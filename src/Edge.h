@@ -39,6 +39,8 @@ public:
 
     double length(int i);
 
+    void   print(int i) const;
+
 private:
 
     int _size;
