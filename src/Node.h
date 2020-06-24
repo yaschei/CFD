@@ -26,6 +26,8 @@ private:
     double _x [NMAXNODE];
     double _y [NMAXNODE];
 
+
+
 };
 
 #endif // NODE_H

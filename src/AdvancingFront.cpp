@@ -1,747 +1,543 @@
 #include "AdvancingFront.h"
 
-AdvancingFront::AdvancingFront()
+void AdvancingFront::buildMesh()
 {
+    // initialize variable
+    int front[NMAXNODE][3];
+    int activate[NMAXNODE];
+    int counterFront = edge->size();
+    int frontSize = edge->size();
 
-}
+    int nodCounter = node->size();
+    int edgCounter = edge->size();
+    int elmCounter = 0;
 
-void AdvancingFront::mesh()
-{
-    Edge *front = new Edge();
-    front->node = node;
+    // copy initial geometry inside front
+    buildFront(frontSize, front, edge);
 
-    //init size
-    front->setSize(edge->size());
-    triangle->setSize(0);
+//    for(int ifront = 0; ifront < frontSize; ifront++)
+//    {
+//        std::cout << front[ifront][0] << " " << front[ifront][1] << " " << front[ifront][2] << std::endl;
+//    }
 
-    int activate[1000];
-    double minAngle;
+    // UPDATE EDGE AFTER BUILDING NEW ONE
 
-    //copy edge from geometry
-    for(int i=0; i<front->size(); i++)
-    {
-        front->set(i, edge->getCurrent(i), edge->getPrevious(i), edge->getNext(i));
-    }
+    //begin frontal triangulation
+    int N = frontSize - 8;
+    int k = 0;
+    while(counterFront > N && k < 100){
 
-
-
-//    while(front->size() < front->size()+1)
-    for(int k=0; k<3; k++)
-    {
-        //Select the smallest edge
-        int indexMin = 0;
-        double min   = edge->length(indexMin);
-
-        for(int i=0; i<front->size(); i++)
+        std::cout<< "LOOP : " << k <<std::endl;
+        k++;
+        //remove all angle < PI/2
+        for(int ifront = 0; ifront < frontSize && counterFront > N; ifront++)
         {
+            if(activate[ifront] != 1){
 
-            if(edge->length(front->getCurrent(i)) < min && activate[i] != 1)
-            {
-                min      = edge->length(front->getCurrent(i));
-                indexMin = i;
-            }
+                //find the row with the smallest edge
+                int     prevPos = front[ifront][1];
+                int     currPos = front[ifront][0];
+                int     nextPos = front[ifront][2];
+                int prevprevPos = front[prevPos][1];
+                int nextnextPos = front[nextPos][2];
 
-        }
+                //take current edge
+                int prevprevEdge = front[prevprevPos][0];
+                int     prevEdge = front[prevPos][0];
+                int     currEdge = front[currPos][0];
+                int     nextEdge = front[nextPos][0];
+                int nextnextEdge = front[nextnextPos][0];
 
-        int currPos   = front->getCurrent(indexMin);
-        int currNode0 = edge->getNode(currPos, 0);
-        int currNode1 = edge->getNode(currPos, 1);
+                //get edge node
+                int prevprevNode = edge->getNode(prevprevEdge, 0);
+                int     prevNode = edge->getNode(prevEdge, 0);
+                int     currNode = edge->getNode(currEdge, 0);
+                int     nextNode = edge->getNode(nextEdge, 0);
+                int nextnextNode = edge->getNode(nextnextEdge, 0);
 
-        int prevPos   = front->getPrevious(indexMin);
-        int prevNode0 = edge->getNode(prevPos, 0);
-        int prevNode1 = edge->getNode(prevPos, 1);
+                //compare angle on currNode0 and currNode1
+                double u[2] = { node->getX(currNode) - node->getX(prevNode), node->getY(currNode) - node->getY(prevNode) };
+                double v[2] = { node->getX(nextNode) - node->getX(currNode), node->getY(nextNode) - node->getY(currNode) };
+                double currAngle = angle(&u[0], &v[0]);
 
-        int nextPos   = front->getNext(indexMin);
-        int nextNode0 = edge->getNode(nextPos, 0);
-        int nextNode1 = edge->getNode(nextPos, 1);
-
-        if(edge->getLeftElement(currPos) != EMPTY)
-        {
-            currNode0 = edge->getNode(currPos, 1);
-            currNode1 = edge->getNode(currPos, 0);
-        }
-        if(edge->getLeftElement(prevPos) != EMPTY)
-        {
-            prevNode0 = edge->getNode(prevPos, 1);
-            prevNode1 = edge->getNode(prevPos, 0);
-        }
-        if(edge->getLeftElement(nextPos) != EMPTY)
-        {
-            nextNode0 = edge->getNode(nextPos, 1);
-            nextNode1 = edge->getNode(nextPos, 0);
-        }
-
-        //calc angle on currNode0
-        double u1[2] = { node->getX(currNode0) - node->getX(prevNode0), node->getY(currNode0) - node->getY(prevNode0) };
-        double v1[2] = { node->getX(nextNode0) - node->getX(currNode0), node->getY(nextNode0) - node->getY(currNode0) };
-
-        //calc angle on currNode1
-        double u2[2] = { node->getX(currNode1) - node->getX(currNode0), node->getY(currNode1) - node->getY(currNode0) };
-        double v2[2] = { node->getX(nextNode1) - node->getX(currNode1), node->getY(nextNode1) - node->getY(currNode1) };
-
-        if(angle(&u2[0], &v2[0]) < angle(&u1[0], &v1[0]))
-        {
-            currPos   = front->getNext(indexMin);
-            currNode0 = edge->getNode(currPos, 0);
-            currNode1 = edge->getNode(currPos, 1);
-
-            prevPos   = front->getCurrent(indexMin);
-            prevNode0 = edge->getNode(prevPos, 0);
-            prevNode1 = edge->getNode(prevPos, 1);
-
-            nextPos   = front->getNext(currPos);
-            nextNode0 = edge->getNode(nextPos, 0);
-            nextNode1 = edge->getNode(nextPos, 1);
-
-            if(edge->getLeftElement(currPos) != EMPTY)
-            {
-                currNode0 = edge->getNode(currPos, 1);
-                currNode1 = edge->getNode(currPos, 0);
-            }
-            if(edge->getLeftElement(prevPos) != EMPTY)
-            {
-                prevNode0 = edge->getNode(prevPos, 1);
-                prevNode1 = edge->getNode(prevPos, 0);
-            }
-            if(edge->getLeftElement(nextPos) != EMPTY)
-            {
-                nextNode0 = edge->getNode(nextPos, 1);
-                nextNode1 = edge->getNode(nextPos, 0);
-            }
-
-            minAngle = angle(&u2[0], &v2[0]);
-
-        }
-        else
-        {
-            minAngle = angle(&u1[0], &v1[0]);
-        }
-
-        std::cout << "  previous edge" << prevPos << " (" << prevNode0 << "," << prevNode1 << ") left element is : " << edge->getLeftElement(prevPos) << std::endl;
-        std::cout << "  current  edge" << currPos << " (" << currNode0 << "," << currNode1 << ") left element is : " << edge->getLeftElement(currPos) << std::endl;
-        std::cout << "  next     edge" << nextPos << " (" << nextNode0 << "," << nextNode1 << ") left element is : " << edge->getLeftElement(nextPos) << std::endl;
-
-
-
-
-
-
-
-
-        if(minAngle <= 0.5*PI) // if the angle at current position is < pi/2
-        {
-            std::cout << "      case A : alpha < PI/2" << std::endl;
-
-            //test if there is another point inside circumcenter
-            int isInside = 0;
-            for(int i=0; i<node->size(); i++)
-            {
-                if(i != currNode0 && i != currNode1 && i != prevNode0)
+                if(currAngle <= 0.5*PI)
                 {
-                    if(triangle->inCircle(currNode0, currNode1, prevNode0, i))
+                    std::cout << "Angle < PI/2 founded" << std::endl;
+
+                    //empty circle test
+                    for(int i=0; i<frontSize; i++)
                     {
-                        std::cout << "      ***node : " << i << " is inside the triangle(" << currNode0 << "," << currNode1 << "," << prevNode0 << ")" << std::endl;
-                        isInside = 1;
-                    }
-                }
-
-            }
-
-            if(isInside == 1)
-            {
-
-
-
-
-            }
-            else
-            {
-
-                //build new edges----------
-                edge->set(edge->size(), currNode1, prevNode0, triangle->size(), EMPTY, currNode0, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                //update base edge
-                if(edge->getLeftElement(currPos) != EMPTY)
-                {
-                    edge->setRightElement(currPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(currPos, triangle->size());
-                }
-
-                //update prev edge
-                if(edge->getLeftElement(prevPos) != EMPTY)
-                {
-                    edge->setRightElement(prevPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(prevPos, triangle->size());
-                }
-
-                //build new triangle-------
-                triangle->set(triangle->size(), currPos, edge->size()-1, prevPos);
-                triangle->setSize(triangle->size()+1);
-
-                //display
-                std::cout << "          --> create ";
-                edge->print(edge->size()-1);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-1);
-
-                std::cout << "          --> update ";
-                edge->print(currPos);
-
-                std::cout << "          --> update ";
-                edge->print(prevPos);
-
-                //update front
-                activate[currPos] = 1;
-                activate[prevPos] = 1;
-
-                std::cout << "              --> update front" << currPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << prevPos << " : ***de-activated" << std::endl;
-
-
-                front->set(nextPos  , nextPos, edge->size()-1, front->getNext(nextPos));
-                std::cout << "              --> update front" << nextPos << " : (" << front->getCurrent(nextPos) << "," << front->getPrevious(nextPos) << "," << front->getNext(nextPos) << ")" << std::endl;
-
-                front->set(front->size()  , edge->size()-1, front->getPrevious(prevPos), nextPos);
-                front->setSize(front->size()+1);
-
-                std::cout << "              --> update front" << front->size()-1 << " : (" << front->getCurrent(front->size()-1) << "," << front->getPrevious(front->size()-1) << "," << front->getNext(front->size()-1) << ")" << std::endl;
-
-            }
-        }
-        else if(0.5*PI < minAngle && minAngle < 2*PI*ONETHIRD)
-        {
-
-            std::cout << "      case B : PI/2 < alpha < 2PI/3" << std::endl;
-
-            //Build the new node
-            double x = node->getX(currNode1) - node->getX(currNode0);
-            double y = node->getY(currNode1) - node->getY(currNode0);
-
-            double xnew = x * cos(0.5*minAngle) - y * sin(0.5*minAngle) + node->getX(currNode0);
-            double ynew = x * sin(0.5*minAngle) + y * cos(0.5*minAngle) + node->getY(currNode0);
-            node->set(node->size(), xnew, ynew);
-
-            //test if there is another point inside circumcenter
-            int isInside = 0;
-            int minDistance = 9999.9;
-            int indexInside = 0;
-
-            for(int i=0; i<node->size(); i++)
-            {
-                if(i != currNode0 && i != currNode1 && i != node->size())
-                {
-
-                    double x = node->getX(i) - node->getX(node->size());
-                    double y = node->getY(i) - node->getY(node->size());
-                    double R = .5*edge->length(currPos);
-
-                    if(triangle->inCircle(currNode0, currNode1, node->size(), i) || x*x + y*y < R*R)
-                    {
-//                        std::cout << "      test : " << i << "(" << currNode0 << "," << currNode1 << "," << node->size() << ")" << std::endl;
-                        isInside = 1;
-                        if(node->distance(currNode0, i) < minDistance)
+                        if(activate[ifront] != 1)
                         {
-//                            std::cout << node->distance(currNode0, i) << std::endl;
-                            minDistance = node->distance(currNode0, i);
-                            indexInside = i;
+
                         }
-
                     }
-                }
 
-            }
+                    int isInside = 0;
+                    double minDistance = 9999.9;
+                    int indexInside = 0;
 
-            if(isInside == 1)
-            {
+                    std::vector<int> edgeInside;
+                    minDistance = 9999.9;
 
-                //build new edges----------
-                edge->set(edge->size(), currNode1, indexInside, triangle->size(), EMPTY, currNode0, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                edge->set(edge->size(), indexInside, currNode0, triangle->size(), EMPTY, currNode1, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                edge->set(edge->size(), indexInside, prevNode0, triangle->size()+1, EMPTY, prevNode1, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                //update base edge
-                if(edge->getLeftElement(currPos) != EMPTY)
-                {
-                    edge->setRightElement(currPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(currPos, triangle->size());
-                }
-
-                //build new triangle-------
-                triangle->set(triangle->size(), currPos, edge->size()-3, edge->size()-2);
-                triangle->setSize(triangle->size()+1);
-
-                triangle->set(triangle->size(), edge->size()-2, edge->size()-1, prevPos);
-                triangle->setSize(triangle->size()+1);
-
-                //display
-                std::cout << "          --> create ";
-                edge->print(edge->size()-3);
-
-                std::cout << "          --> create ";
-                edge->print(edge->size()-2);
-
-                std::cout << "          --> create ";
-                edge->print(edge->size()-1);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-2);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-1);
-
-                std::cout << "          --> update ";
-                edge->print(currPos);
-
-                std::cout << "          --> update ";
-                edge->print(prevPos);
-
-
-                //update front
-                activate[currPos] = 1;
-                activate[prevPos] = 1;
-                activate[front->size()+1] = 1;
-
-                std::cout << "              --> update front" << currPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << prevPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << front->size()+1 << " : ***de-activated" << std::endl;
-
-
-                front->set(front->size()  , edge->size()-3, edge->size()-1             , nextPos);
-                front->set(front->size()+1, edge->size()-2, prevPos                    , edge->size()-2);
-                front->set(front->size()+2, edge->size()-1, front->getPrevious(prevPos), edge->size()-3);
-                front->setSize(front->size()+3);
-
-                front->set(nextPos        , front->getCurrent(nextPos), front->getCurrent(front->size()-3), front->getNext(nextPos));
-
-
-                std::cout << "              --> update front" << nextPos << " : (" << front->getCurrent(nextPos) << "," << front->getPrevious(nextPos) << "," << front->getNext(nextPos) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-3 << " : (" << front->getCurrent(front->size()-3) << "," << front->getPrevious(front->size()-3) << "," << front->getNext(front->size()-3) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-1 << " : (" << front->getCurrent(front->size()-1) << "," << front->getPrevious(front->size()-1) << "," << front->getNext(front->size()-1) << ")" << std::endl;
-
-
-
-            }
-            else
-            {
-
-                //create new node----------
-                std::cout << "      --> triangle(" << currNode0  << "," << currNode1 << "," << node->size() << ")" << std::endl;
-                std::cout << "          --> create node" << node->size() << " : (" << xnew << "," << ynew << ")" << std::endl;
-
-                //build new edges----------
-                edge->set(edge->size(), currNode1, node->size(), triangle->size(), EMPTY, currNode0, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                edge->set(edge->size(), node->size(), currNode0, triangle->size(), EMPTY, currNode1, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                edge->set(edge->size(), node->size(), prevNode0, triangle->size()+1, EMPTY, prevNode1, EMPTY);
-                edge->setSize(edge->size()+1);
-
-                //update node size
-                node->setSize(node->size()+1);
-
-                //update base edge
-                if(edge->getLeftElement(currPos) != EMPTY)
-                {
-                    edge->setRightElement(currPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(currPos, triangle->size());
-                }
-
-                //update prev edge
-                if(edge->getLeftElement(prevPos) != EMPTY)
-                {
-                    edge->setRightElement(prevPos, triangle->size()+1);
-                }
-                else
-                {
-                    edge->setLeftElement(prevPos, triangle->size()+1);
-                }
-
-                //build new triangle-------
-                triangle->set(triangle->size(), currPos, edge->size()-3, edge->size()-2);
-                triangle->setSize(triangle->size()+1);
-
-                triangle->set(triangle->size(), edge->size()-2, edge->size()-1, prevPos);
-                triangle->setSize(triangle->size()+1);
-
-                //display
-                std::cout << "          --> create ";
-                edge->print(edge->size()-3);
-
-                std::cout << "          --> create ";
-                edge->print(edge->size()-2);
-
-                std::cout << "          --> create ";
-                edge->print(edge->size()-1);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-2);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-1);
-
-                std::cout << "          --> update ";
-                edge->print(currPos);
-
-                std::cout << "          --> update ";
-                edge->print(prevPos);
-
-
-                //update front
-                activate[currPos] = 1;
-                activate[prevPos] = 1;
-                activate[front->size()+1] = 1;
-
-                std::cout << "              --> update front" << currPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << prevPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << front->size()+1 << " : ***de-activated" << std::endl;
-
-
-                front->set(front->size()  , edge->size()-3, edge->size()-1             , nextPos);
-                front->set(front->size()+1, edge->size()-2, prevPos                    , edge->size()-2);
-                front->set(front->size()+2, edge->size()-1, front->getPrevious(prevPos), edge->size()-3);
-                front->setSize(front->size()+3);
-
-                front->set(nextPos        , front->getCurrent(nextPos), front->getCurrent(front->size()-3), front->getNext(nextPos));
-
-
-                std::cout << "              --> update front" << nextPos << " : (" << front->getCurrent(nextPos) << "," << front->getPrevious(nextPos) << "," << front->getNext(nextPos) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-3 << " : (" << front->getCurrent(front->size()-3) << "," << front->getPrevious(front->size()-3) << "," << front->getNext(front->size()-3) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-1 << " : (" << front->getCurrent(front->size()-1) << "," << front->getPrevious(front->size()-1) << "," << front->getNext(front->size()-1) << ")" << std::endl;
-
-
-            }
-
-        }
-        else if(2*PI*ONETHIRD <= minAngle)
-        {
-            std::cout << "      case C : 2PI/3 < alpha " << std::endl;
-
-            //Build the new node
-            double x = node->getX(currNode1) - node->getX(currNode0);
-            double y = node->getY(currNode1) - node->getY(currNode0);
-
-            double xnew = x * cos(PI*ONETHIRD) - y * sin(PI*ONETHIRD) + node->getX(currNode0);
-            double ynew = x * sin(PI*ONETHIRD) + y * cos(PI*ONETHIRD) + node->getY(currNode0);
-            node->set(node->size(), xnew, ynew);
-
-            //test if there is another point inside circumcenter
-            int isInside = 0;
-            double minDistance = 9999.9;
-            int indexInside = 0;
-
-//            for(int i=0; i<node->size(); i++)
-//            {
-//                if(i != currNode0 && i != currNode1 && i != node->size())
-//                {
-
-//                    double x = node->getX(i) - node->getX(node->size());
-//                    double y = node->getY(i) - node->getY(node->size());
-//                    double R = .5*edge->length(currPos);
-
-//                    if(triangle->inCircle(currNode0, currNode1, node->size(), i) || x*x + y*y < R*R)
-//                    {
-////                        std::cout << "      test : " << i << "(" << currNode0 << "," << currNode1 << "," << node->size() << ")" << std::endl;
-//                        isInside = 1;
-//                        if(node->distance(currNode0, i) < minDistance)
-//                        {
-////                            std::cout << node->distance(currNode0, i) << std::endl;
-//                            minDistance = node->distance(currNode0, i);
-//                            indexInside = i;
-//                        }
-
-//                    }
-//                }
-
-//            }
-
-            std::vector<int> edgeInside;
-            minDistance = 9999.9;
-
-            for(int i=0; i<edge->size(); i++)
-            {
-                int node0 = edge->getNode(i,0);
-                int node1 = edge->getNode(i,1);
-
-//                std::cout << " edge" << i << " (" << node0 <<","<< node1 << ")" << std::endl;
-
-                if(node0 != currNode0 && node0 != currNode1 && node0 != node->size())
-                {
-
-                    double x = node->getX(node0) - node->getX(node->size());
-                    double y = node->getY(node0) - node->getY(node->size());
-                    double R = .5*edge->length(currPos);
-
-                    if(triangle->inCircle(currNode0, currNode1, node->size(), node0) || x*x + y*y < R*R)
+                    for(int i=0; i<edge->size(); i++)
                     {
-//                        std::cout << "      test : " << node0 << " is inside (" << currNode0 << "," << currNode1 << "," << node->size() << ") ?**" << std::endl;
-                        isInside = 1;
+                        int node0 = edge->getNode(i,0);
+                        int node1 = edge->getNode(i,1);
 
-                        if(node->distance(currNode0, node0) <= minDistance + 5.e-8)
+        //                std::cout << " edge" << i << " (" << node0 <<","<< node1 << ")" << std::endl;
+
+                        if(node0 != currNode0 && node0 != currNode1 && node0 != node->size())
                         {
-                            minDistance = node->distance(currNode0, node0);
-                            indexInside = node0;
-                            edgeInside.push_back(i);
-//                            std::cout << i << " ** " << std::endl;
+
+                            double x = node->getX(node0) - node->getX(node->size());
+                            double y = node->getY(node0) - node->getY(node->size());
+                            double R = .5*edge->length(currPos);
+
+                            if(triangle->inCircle(currNode0, currNode1, node->size(), node0) || x*x + y*y < R*R)
+                            {
+        //                        std::cout << "      test : " << node0 << " is inside (" << currNode0 << "," << currNode1 << "," << node->size() << ") ?**" << std::endl;
+                                isInside = 1;
+
+                                if(node->distance(currNode0, node0) <= minDistance + 5.e-8)
+                                {
+                                    minDistance = node->distance(currNode0, node0);
+                                    indexInside = node0;
+                                    edgeInside.push_back(i);
+        //                            std::cout << i << " ** " << std::endl;
+
+                                }
+
+                            }
 
                         }
 
-                    }
-
-                }
-
-                if(node1 != currNode0 && node1 != currNode1 && node1 != node->size())
-                {
-                    double x = node->getX(node1) - node->getX(node->size());
-                    double y = node->getY(node1) - node->getY(node->size());
-                    double R = .5*edge->length(currPos);
-
-                    if(triangle->inCircle(currNode0, currNode1, node->size(), node1) || x*x + y*y < R*R)
-                    {
-//                        std::cout << "      test : " << node1 << " is inside (" << currNode0 << "," << currNode1 << "," << node->size() << ") ?---" << std::endl;
-                        isInside = 1;
-
-                        if(node->distance(currNode0, node1) <= minDistance)
+                        if(node1 != currNode0 && node1 != currNode1 && node1 != node->size())
                         {
-                            minDistance = node->distance(currNode0, node1);
-                            indexInside = node1;
-                            edgeInside.push_back(i);
-//                            std::cout << i << "----" << std::endl;
+                            double x = node->getX(node1) - node->getX(node->size());
+                            double y = node->getY(node1) - node->getY(node->size());
+                            double R = .5*edge->length(currPos);
+
+                            if(triangle->inCircle(currNode0, currNode1, node->size(), node1) || x*x + y*y < R*R)
+                            {
+        //                        std::cout << "      test : " << node1 << " is inside (" << currNode0 << "," << currNode1 << "," << node->size() << ") ?---" << std::endl;
+                                isInside = 1;
+
+                                if(node->distance(currNode0, node1) <= minDistance)
+                                {
+                                    minDistance = node->distance(currNode0, node1);
+                                    indexInside = node1;
+                                    edgeInside.push_back(i);
+        //                            std::cout << i << "----" << std::endl;
+
+                                }
+
+                            }
 
                         }
 
+
+
+
                     }
 
+                    if(isInside == 1)
+                    {
+
+                    }
+
+
+
+                    edge->set(edgCounter, prevNode, nextNode, EMPTY, elmCounter, EMPTY, currNode);
+//                    edge->print(edgCounter);
+                    triangle->set(elmCounter, currEdge, edgCounter, prevEdge);
+
+                    //update front
+                    activate[prevPos] = 1; // prevPos de-activated
+                    activate[currPos] = 1; // currPos de-activated
+                    counterFront-=2;
+
+                    edge->set(prevEdge, edge->getNode(prevEdge,0), edge->getNode(prevEdge,1) , elmCounter, edge->getRightElement(prevEdge), nodCounter, edge->getRightNode(prevEdge));
+                    edge->set(currEdge, edge->getNode(currEdge,0), edge->getNode(currEdge,1) , elmCounter, edge->getRightElement(currEdge), nodCounter, edge->getRightNode(currEdge));
+
+
+                    front[edgCounter][0] = edgCounter;      //new edge
+                    front[edgCounter][1] = front[prevPos][1]; //prev prevPos
+                    front[edgCounter][2] = front[currPos][2]; //next currPos
+                    counterFront++;
+
+                    front[prevprevPos][0] = front[prevprevPos][0];      //new edge
+                    front[prevprevPos][1] = front[prevprevPos][1]; //prev prevPos
+                    front[prevprevPos][2] = edgCounter; //next currPos
+
+                    front[nextPos][0] = front[nextPos][0];      //new edge
+                    front[nextPos][1] = edgCounter; //prev prevPos
+                    front[nextPos][2] = front[nextPos][2]; //next currPos
+
+                    frontSize++;
+
+
+                    //increment counter elm
+                    edgCounter++;
+                    elmCounter++;
+
+                    //update mesh structure
+                    edge->setSize(edgCounter);
+                    triangle->setSize(elmCounter);
+
+
+                    writeElement(elmCounter-1);
+
+
+                    for(int ifront = 0; ifront < frontSize; ifront++)
+                    {
+                        if(activate[ifront] != 1){
+                            std::cout << front[ifront][0] << " " << front[ifront][1] << " " << front[ifront][2] << std::endl;
+                        }
+                    }
+
+                    std::cout<<counterFront<<std::endl;
+
                 }
+                else
+                {
+//                    std::cout << "***No angle < PI/2 founded" << std::endl;
+                }
+
+            }
+
+        }
+
+//        std::cout<<counterFront<<std::endl;
+
+        if(counterFront > N){
+
+            //find the row with the smallest edge
+            int     currPos = findSmallestEdgeIndex(frontSize, front, &activate[0]);
+            int     prevPos = front[currPos][1];
+            int     nextPos = front[currPos][2];
+            int prevprevPos = front[prevPos][1];
+            int nextnextPos = front[nextPos][2];
+
+            //take current edge
+            int prevprevEdge = front[prevprevPos][0];
+            int     prevEdge = front[prevPos][0];
+            int     currEdge = front[currPos][0];
+            int     nextEdge = front[nextPos][0];
+            int nextnextEdge = front[nextnextPos][0];
+
+            //get edge node
+            int     prevprevNode = edge->getNode(prevprevEdge, 0);
+            int         prevNode = edge->getNode(prevEdge, 0);
+            int         currNode = edge->getNode(currEdge, 0);
+            int         nextNode = edge->getNode(nextEdge, 0);
+            int     nextnextNode = edge->getNode(nextnextEdge, 0);
+            int nextnextnextNode = edge->getNode(nextnextEdge, 1);
+
+    //        std::cout << "  ifront = " << ifront << std::endl;
+            std::cout << "  edge" << prevEdge << " (" << prevNode << "," << currNode << ")" << std::endl;
+            std::cout << "  edge" << currEdge << " (" << currNode << "," << nextNode << ")" << std::endl;
+            std::cout << "  edge" << nextEdge << " (" << nextNode << "," << nextnextNode << ")" << std::endl;
+
+            //compare angle on currNode0 and currNode1
+            double u1[2] = { node->getX(currNode) - node->getX(prevNode), node->getY(currNode) - node->getY(prevNode) };
+            double v1[2] = { node->getX(nextNode) - node->getX(currNode), node->getY(nextNode) - node->getY(currNode) };
+//            std::cout << " u1 " << u1[0] <<  " " << u1[1] << std::endl;
+//            std::cout << " v1 " << v1[0] <<  " " << v1[1] << std::endl;
+            double currAngle = angle(u1, v1);
+
+            double u2[2] = { node->getX(nextNode) - node->getX(currNode), node->getY(nextNode) - node->getY(currNode) };
+            double v2[2] = { node->getX(nextnextNode) - node->getX(nextNode), node->getY(nextnextNode) - node->getY(nextNode) };
+//            std::cout << " u2 " << u2[0] <<  " " << u2[1] << std::endl;
+//            std::cout << " v2 " << v2[0] <<  " " << v2[1] << std::endl;
+            double nextAngle = angle(u2, v2);
+
+
+
+            if(0.5*PI < currAngle && currAngle <= 2*PI*ONETHIRD)
+            {
+
+                std::cout << "      case B : PI/2 < currAngle < 2PI/3" << std::endl;
+
+                //Build the new node
+                double d1 =   node->distance(prevprevNode, prevNode);
+                double d2 = 2*node->distance(prevNode, currNode);
+                double d3 = 2*node->distance(currNode, nextNode);
+                double d4 =   node->distance(nextNode, nextnextNode);
+                double R = (d1 + d2 + d3 + d4) / 6.0;
+
+                node->set(nodCounter, node->getX(currNode)+R, node->getY(currNode));
+
+                double v[2] = {node->getX(nextNode) - node->getX(currNode), node->getY(nextNode) - node->getY(currNode)};
+                double w[2] = {node->getX(currNode) - node->getX(nodCounter), node->getY(currNode) - node->getY(nodCounter)};
+                double a2 = angle(&w[0], &v[0]);
+
+                double x = node->getX(nodCounter) - node->getX(currNode);
+                double y = node->getY(nodCounter) - node->getY(currNode);
+
+                double xnew = x * cos(0.5*currAngle + 2*PI-a2) - y * sin(0.5*currAngle + 2*PI-a2) + node->getX(currNode);
+                double ynew = x * sin(0.5*currAngle + 2*PI-a2) + y * cos(0.5*currAngle + 2*PI-a2) + node->getY(currNode);
+                node->set(nodCounter, xnew, ynew);
+
+
+                edge->set(edgCounter, currNode, nodCounter, elmCounter, elmCounter+1, prevNode, nextNode);
+    //            edge->print(edgCounter);
+
+                edge->set(edgCounter+1, prevNode, nodCounter, EMPTY, elmCounter, EMPTY, currNode);
+    //            edge->print(edgCounter+1);
+
+
+                edge->set(edgCounter+2, nodCounter, nextNode, EMPTY, elmCounter+1, EMPTY, currNode);
+    //            edge->print(edgCounter+2);
+
+
+                triangle->set(elmCounter, prevEdge, edgCounter, edgCounter+1);
+                triangle->set(elmCounter+1, currEdge, edgCounter+2, edgCounter);
+
+                //update front
+                activate[currPos] = 1; // currPos de-activated
+                activate[prevPos] = 1; // currPos de-activated
+                activate[edgCounter] = 1; // currPos de-activated
+                counterFront-=2;
+
+                edge->set(prevEdge, edge->getNode(prevEdge,0), edge->getNode(prevEdge,1) , elmCounter, edge->getRightElement(prevEdge), nodCounter, edge->getRightNode(prevEdge));
+                edge->set(currEdge, edge->getNode(currEdge,0), edge->getNode(currEdge,1) , elmCounter+1, edge->getRightElement(currEdge), nodCounter, edge->getRightNode(currEdge));
+
+
+                //new 2
+                front[edgCounter+1][0] = edgCounter+1;
+                front[edgCounter+1][1] = front[prevPos][1];
+                front[edgCounter+1][2] = edgCounter+2;
+                counterFront++;
+
+                //new 3
+                front[edgCounter+2][0] = edgCounter+2;
+                front[edgCounter+2][1] = edgCounter+1;
+                front[edgCounter+2][2] = front[currPos][2];
+                counterFront++;
+
+                //prevprevPos
+                front[prevprevPos][0] = front[prevprevPos][0]; //unchanged
+                front[prevprevPos][1] = front[prevprevPos][1]; //unchanged
+                front[prevprevPos][2] = edgCounter+1;        //next new Edge
+
+                //nextPos
+                front[nextPos][0] = front[nextPos][0]; //unchanged
+                front[nextPos][1] = edgCounter+2;      //prev new Edge
+                front[nextPos][2] = front[nextPos][2]; //unchanged
+
+                frontSize+=3;
+
+
+                //increment counter elm
+                nodCounter++;
+                edgCounter+=3;
+                elmCounter+=2;
+
+                //update mesh structure
+                node->setSize(nodCounter);
+                edge->setSize(edgCounter);
+                triangle->setSize(elmCounter);
+
+                writeElement(elmCounter-1);
 
 
 
 
             }
-
-            if(isInside == 1)
+            else if(0.5*PI < nextAngle && nextAngle <= 2*PI*ONETHIRD )
             {
 
-                std::cout << "      ***edge : " << edgeInside[0] << " and " << edgeInside[1]  << " is inside the triangle(" << currNode0 << "," << currNode1 << "," << prevNode0 << ")" << std::endl;
-                std::cout << "      ***node : " << indexInside << " is inside the triangle(" << currNode0 << "," << currNode1 << "," << prevNode0 << ")" << std::endl;
+                std::cout << "      case B : PI/2 < nextAngle < 2PI/3" << std::endl;
 
-                //build new edges----------
-                edge->set(edge->size(), currNode1, indexInside, triangle->size(), EMPTY, currNode0, EMPTY);
-                edge->setSize(edge->size()+1);
+                //Build the new node
+                double d1 =   node->distance(prevNode, currNode);
+                double d2 = 2*node->distance(currNode, nextNode);
+                double d3 = 2*node->distance(nextNode, nextnextNode);
+                double d4 =   node->distance(nextnextNode, nextnextnextNode);
+                double R = (d1 + d2 + d3 + d4) / 6.0;
 
-                edge->set(edge->size(), indexInside, currNode0, triangle->size(), EMPTY, currNode1, EMPTY);
-                edge->setSize(edge->size()+1);
 
-                //update base edge
-                if(edge->getLeftElement(currPos) != EMPTY)
-                {
-                    edge->setRightElement(currPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(currPos, triangle->size());
-                }
+                node->set(nodCounter, node->getX(nextNode)+R, node->getY(nextNode));
 
-                //build new triangle-------
-                triangle->set(triangle->size(), currPos, edge->size()-2, edge->size()-1);
-                triangle->setSize(triangle->size()+1);
+                double v[2] = {node->getX(nextnextNode) - node->getX(nextNode), node->getY(nextnextNode) - node->getY(nextNode)};
+                double w[2] = {node->getX(nextNode) - node->getX(nodCounter), node->getY(nextNode) - node->getY(nodCounter)};
+                double a2 = angle(&w[0], &v[0]);
 
-                //display
-                std::cout << "          --> create ";
-                edge->print(edge->size()-2);
+                double x = node->getX(nodCounter) - node->getX(nextNode);
+                double y = node->getY(nodCounter) - node->getY(nextNode);
 
-                std::cout << "          --> create ";
-                edge->print(edge->size()-1);
+                double xnew = x * cos(0.5*nextAngle + 2*PI-a2) - y * sin(0.5*nextAngle + 2*PI-a2) + node->getX(nextNode);
+                double ynew = x * sin(0.5*nextAngle + 2*PI-a2) + y * cos(0.5*nextAngle + 2*PI-a2) + node->getY(nextNode);
+                node->set(nodCounter, xnew, ynew);
 
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-1);
 
-                std::cout << "          --> update ";
-                edge->print(currPos);
+                edge->set(edgCounter, nextNode, nodCounter, elmCounter, elmCounter+1, currNode, nextnextNode);
+    //            edge->print(edgCounter);
 
-                std::cout << "          --> update ";
-                edge->print(prevPos);
+                edge->set(edgCounter+1, currNode, nodCounter, EMPTY, elmCounter, EMPTY, nextNode);
+    //            edge->print(edgCounter+1);
+
+
+                edge->set(edgCounter+2, nodCounter, nextnextNode, EMPTY, elmCounter+1, EMPTY, nextNode);
+    //            edge->print(edgCounter+2);
+
+
+                triangle->set(elmCounter, currEdge, edgCounter, edgCounter+1);
+                triangle->set(elmCounter+1, nextEdge, edgCounter+2, edgCounter);
 
 
                 //update front
-                activate[currPos] = 1;
+                activate[currPos] = 1; // currPos de-activated
+                activate[nextPos] = 1; // currPos de-activated
+                activate[edgCounter] = 1; // currPos de-activated
+                counterFront-=2;
 
-                front->set(front->size()  , edge->size()-2            , edgeInside[0]                  , nextPos);
-                front->set(front->size()+1, edge->size()-1            , prevPos                        , edgeInside[1]);
-                front->setSize(front->size()+2);
-
-                front->set(prevPos        , front->getCurrent(prevPos), front->getPrevious(prevPos)     , front->getCurrent(front->size()-1));
-                front->set(nextPos        , front->getCurrent(nextPos), front->getCurrent(front->size()-2), front->getNext(nextPos));
-
-                front->set(edgeInside[0]        , front->getCurrent(edgeInside[0]), front->getPrevious(edgeInside[0])     , edge->size()-2);
-                front->set(edgeInside[1]        , front->getCurrent(edgeInside[1]), edge->size()-1, front->getNext(edgeInside[1]));
+                edge->set(currEdge, edge->getNode(currEdge,0), edge->getNode(currEdge,1) , elmCounter, edge->getRightElement(currEdge), nodCounter, edge->getRightNode(currEdge));
+                edge->set(nextEdge, edge->getNode(nextEdge,0), edge->getNode(nextEdge,1) , elmCounter+1, edge->getRightElement(nextEdge), nodCounter, edge->getRightNode(nextEdge));
 
 
-                std::cout << "              --> update front" << currPos << " : ***de-activated" << std::endl;
-                std::cout << "              --> update front" << prevPos << " : (" << front->getCurrent(prevPos) << "," << front->getPrevious(prevPos) << "," << front->getNext(prevPos) << ")" << std::endl;
-                std::cout << "              --> update front" << nextPos << " : (" << front->getCurrent(nextPos) << "," << front->getPrevious(nextPos) << "," << front->getNext(nextPos) << ")" << std::endl;
-                std::cout << "              --> update front" << edgeInside[0] << " : (" << front->getCurrent(edgeInside[0]) << "," << front->getPrevious(edgeInside[0]) << "," << front->getNext(edgeInside[0]) << ")" << std::endl;
-                std::cout << "              --> update front" << edgeInside[1] << " : (" << front->getCurrent(edgeInside[1]) << "," << front->getPrevious(edgeInside[1]) << "," << front->getNext(edgeInside[1]) << ")" << std::endl;
+                //new 2
+                front[edgCounter+1][0] = edgCounter+1;
+                front[edgCounter+1][1] = front[prevPos][0];
+                front[edgCounter+1][2] = edgCounter+2;
+                counterFront++;
+
+                //new 3
+                front[edgCounter+2][0] = edgCounter+2;
+                front[edgCounter+2][1] = edgCounter+1;
+                front[edgCounter+2][2] = front[nextPos][2];
+                counterFront++;
+
+                //prevPos
+                front[prevPos][0] = front[prevPos][0]; //unchanged
+                front[prevPos][1] = front[prevPos][1]; //unchanged
+                front[prevPos][2] = edgCounter+1;        //next new Edge
+
+                //nextnextPos
+                front[nextnextPos][0] = front[nextnextPos][0]; //unchanged
+                front[nextnextPos][1] = edgCounter+2;      //prev new Edge
+                front[nextnextPos][2] = front[nextnextPos][2]; //unchanged
+
+                frontSize+=3;
 
 
-                std::cout << "              --> update front" << front->size()-2 << " : (" << front->getCurrent(front->size()-2) << "," << front->getPrevious(front->size()-2) << "," << front->getNext(front->size()-2) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-1 << " : (" << front->getCurrent(front->size()-1) << "," << front->getPrevious(front->size()-1) << "," << front->getNext(front->size()-1) << ")" << std::endl;
+                //increment counter elm
+                nodCounter++;
+                edgCounter+=3;
+                elmCounter+=2;
 
+                //update mesh structure
+                node->setSize(nodCounter);
+                edge->setSize(edgCounter);
+                triangle->setSize(elmCounter);
 
-
-
+                writeElement(elmCounter-1);
 
             }
-            else
+            else if(2*PI*ONETHIRD <= currAngle && 2*PI*ONETHIRD <= nextAngle)
             {
-                //create new node----------
-                std::cout << "      --> triangle(" << currNode0  << "," << currNode1 << "," << node->size() << ")" << std::endl;
-                std::cout << "          --> create node" << node->size() << " : (" << xnew << "," << ynew << ")" << std::endl;
 
-                //build new edges----------
-                edge->set(edge->size(), currNode1, node->size(), triangle->size(), EMPTY, currNode0, EMPTY);
-                edge->setSize(edge->size()+1);
+                std::cout << "      case C : 2PI/3 < alpha ==> Create equilateral triangle" << std::endl;
 
-                edge->set(edge->size(), node->size(), currNode0, triangle->size(), EMPTY, currNode1, EMPTY);
-                edge->setSize(edge->size()+1);
+                //Build the new element
+                double x = node->getX(nextNode) - node->getX(currNode);
+                double y = node->getY(nextNode) - node->getY(currNode);
 
-                //update node size
-                node->setSize(node->size()+1);
+                double xnew = x * cos(PI*ONETHIRD) - y * sin(PI*ONETHIRD) + node->getX(currNode);
+                double ynew = x * sin(PI*ONETHIRD) + y * cos(PI*ONETHIRD) + node->getY(currNode);
+                node->set(nodCounter, xnew, ynew);
 
-                //update base edge
-                if(edge->getLeftElement(currPos) != EMPTY)
-                {
-                    edge->setRightElement(currPos, triangle->size());
-                }
-                else
-                {
-                    edge->setLeftElement(currPos, triangle->size());
-                }
+                edge->set(edgCounter  , currNode, nodCounter , EMPTY, elmCounter+1, EMPTY, nextNode);
+                edge->set(edgCounter+1, nodCounter , nextNode, EMPTY, elmCounter+1, EMPTY, currNode);
 
-                //build new triangle-------
-                triangle->set(triangle->size(), currPos, edge->size()-2, edge->size()-1);
-                triangle->setSize(triangle->size()+1);
-
-                //display
-                std::cout << "          --> create ";
-                edge->print(edge->size()-2);
-
-                std::cout << "          --> create ";
-                edge->print(edge->size()-1);
-
-                std::cout << "          --> create ";
-                triangle->print(triangle->size()-1);
-
-                std::cout << "          --> update ";
-                edge->print(currPos);
-
-                std::cout << "          --> update ";
-                edge->print(prevPos);
-
+                triangle->set(elmCounter, currEdge, edgCounter+1, edgCounter);
 
                 //update front
-                activate[currPos] = 1;
-                std::cout << "              --> update front" << currPos << " : ***de-activated" << std::endl;
+                activate[currPos] = 1; // currPos de-activated
+                counterFront--;
+                edge->set(currEdge, edge->getNode(currEdge,0), edge->getNode(currEdge,1) , elmCounter, edge->getRightElement(currEdge), nodCounter, edge->getRightNode(currEdge));
 
-                front->set(front->size()  , edge->size()-2            , edge->size()-1                  , nextPos);
-                front->set(front->size()+1, edge->size()-1            , prevPos                         , edge->size()-2);
-                front->setSize(front->size()+2);
+                //new 1
+                front[edgCounter][0] = edgCounter;
+                front[edgCounter][1] = front[currPos][1];
+                front[edgCounter][2] = edgCounter+1;
+                counterFront++;
 
-                if(edge->getRightElement(nextPos) == OUT)
-                {
-                    activate[prevPos] = 1;
-                    std::cout << "              --> update front" << nextPos << " : ***de-activated" << std::endl;
-                }
-                else
-                {
-                    front->set(prevPos        , front->getCurrent(prevPos), front->getPrevious(prevPos)     , front->getCurrent(front->size()-1));
-                    std::cout << "              --> update front" << prevPos << " : (" << front->getCurrent(prevPos) << "," << front->getPrevious(prevPos) << "," << front->getNext(prevPos) << ")" << std::endl;
+                //new 2
+                front[edgCounter+1][0] = edgCounter+1;
+                front[edgCounter+1][1] = edgCounter;
+                front[edgCounter+1][2] = front[currPos][2];
+                counterFront++;
 
-                }
-                if(edge->getRightElement(nextPos) == OUT){
-                    activate[nextPos] = 1;
-                    std::cout << "              --> update front" << nextPos << " : ***de-activated" << std::endl;
-                }
-                else
-                {
-                    front->set(nextPos        , front->getCurrent(nextPos), front->getCurrent(front->size()-2), front->getNext(nextPos));
-                    std::cout << "              --> update front" << nextPos << " : (" << front->getCurrent(nextPos) << "," << front->getPrevious(nextPos) << "," << front->getNext(nextPos) << ")" << std::endl;
-                }
+                //prevPos
+                front[prevPos][0] = front[prevPos][0]; //unchanged
+                front[prevPos][1] = front[prevPos][1]; //unchanged
+                front[prevPos][2] = edgCounter;        //next new Edge
 
+                //nextPos
+                front[nextPos][0] = front[nextPos][0]; //unchanged
+                front[nextPos][1] = edgCounter+1;      //prev new Edge
+                front[nextPos][2] = front[nextPos][2]; //unchanged
 
+                frontSize+=2;
 
+                //increment counter elm
+                nodCounter++;
+                edgCounter+=2;
+                elmCounter++;
 
+                //update mesh structure
+                node->setSize(nodCounter);
+                edge->setSize(edgCounter);
+                triangle->setSize(elmCounter);
 
-                std::cout << "              --> update front" << front->size()-2 << " : (" << front->getCurrent(front->size()-2) << "," << front->getPrevious(front->size()-2) << "," << front->getNext(front->size()-2) << ")" << std::endl;
-                std::cout << "              --> update front" << front->size()-1 << " : (" << front->getCurrent(front->size()-1) << "," << front->getPrevious(front->size()-1) << "," << front->getNext(front->size()-1) << ")" << std::endl;
-
+                writeElement(elmCounter-1);
 
 
 
             }
+            else if(isnan(currAngle) || isnan(nextAngle))
+            {
+                std::cout << "currAngle is " << currAngle*180/PI << std::endl;
+                std::cout << "nextAngle is " << nextAngle*180/PI << std::endl;
 
-        }
-        else
-        {
-            std::cout << "***ERROR no case was found" << indexMin << std::endl;
-        }
+//                std::cout << node->getX(prevprevNode[0]) << " " << node->getY(prevprevNode[0]) << std::endl;
+//                std::cout << node->getX(prevNode[0]) << " " << node->getY(prevNode[0]) << std::endl;
+//                std::cout << node->getX(currNode[0]) << " " << node->getY(currNode[0]) << std::endl;
+//                std::cout << node->getX(nextNode[0]) << " " << node->getY(nextNode[0]) << std::endl;
+//                std::cout << node->getX(nextnextNode[0]) << " " << node->getY(nextnextNode[0]) << std::endl;
 
 
-        const std::string path = "../output/testMesh" + std::to_string(k) + ".vtk";
-        std::ofstream geoOut;
-        geoOut.open(path.c_str(), std::ios::out ); //ouverture du fichier en mode ecriture
-        geoOut  << std::setiosflags (std::ios::scientific) << std::setprecision(5);
+                break;
+            }
 
-        geoOut << "# vtk DataFile Version 3.0" << std::endl;
-        geoOut << "testMesh" + std::to_string(k) << std::endl;
-        geoOut << "ASCII" << std::endl;
-        geoOut << "DATASET POLYDATA" << std::endl;
-        geoOut << "POINTS " << node->size() << " float"<< std::endl;
 
-        for (int i = 0; i < node->size(); i ++ ){
-             geoOut  << node->getX(i) << " " << node->getY(i) << " " << 0.0 << std::endl;
-        }
-
-        geoOut << std::endl;
-        geoOut << "VERTICES " << node->size() << " " << 2*node->size() << std::endl;
-
-        for (int i = 0; i < node->size(); i ++ ){
-             geoOut << 1 << " " << i << std::endl;
-
-        }
-
-        geoOut << std::endl;
-        geoOut << "LINES " << edge->size() << " " << 3*edge->size() << std::endl;
-
-        for (int i = 0; i < edge->size(); i ++ ){
-             geoOut << 2 << " " << edge->getNode(i,0) << " " << edge->getNode(i,1) << std::endl;
+            for(int ifront = 0; ifront < frontSize; ifront++)
+            {
+                if(activate[ifront] != 1){
+                    std::cout << front[ifront][0] << " " << front[ifront][1] << " " << front[ifront][2] << std::endl;
+                }
+            }
+            std::cout<<counterFront<<std::endl;
 
         }
 
     }
 
+    writeMesh();
 
-    delete front;
+    std::cout << "-------------------------------------------------------------------" << std::endl;
+
+//    for (int i = 0; i < triangle->size(); i ++ ){
+//        std::cout << "T" << i << " : " << triangle->getNode(i, 0) << " " << triangle->getNode(i, 1) << " " << triangle->getNode(i, 2) << std::endl;
+////        std::cout << triangle->getEdge(i, 0) << " " << triangle->getEdge(i, 1) << " " << triangle->getEdge(i, 2) << std::endl;
+//        edge->print(triangle->getEdge(i, 0));
+//        edge->print(triangle->getEdge(i, 1));
+//        edge->print(triangle->getEdge(i, 2));
+
+
+//    }
 
 }
 
@@ -754,84 +550,138 @@ void AdvancingFront::buildFront(int size, int arrfront[NMAXNODE][3], Edge *edge)
     }
 }
 
-int AdvancingFront::findSmallestEdgeIndex(int size, int arrfront[][3])
+int AdvancingFront::findSmallestEdgeIndex(int size, int arrfront[][3], int *arrActive)
 {
-    double min      = 9999.9;
-    int    minIndex = -1;
+    double min      = 9999.9 ;
+    int    minIndex = 0;
 
     for(int i = 0; i < size; i++)
     {
-        if(edge->length(arrfront[i][0]) < min )
+        if(arrActive[i] != 1)
         {
-            min      = edge->length(arrfront[i][0]);
-            minIndex = i;
+//            std::cout << edge->length(arrfront[i][0]) << std::endl;
+
+            if(edge->length(arrfront[i][0]) < min - 1.e-8)
+            {
+
+                min      = edge->length(arrfront[i][0]);
+                minIndex = i;
+            }
         }
+
 
     }
 
     return minIndex;
 }
 
-void AdvancingFront::buildMesh()
+
+int AdvancingFront::findEdgeAndNodeInsidePotentialTriangle(int front[][3], int *activate, int frontSize, int currEdge, int n0, int n1, std::vector<int> &edgeIn, int &nodeIn)
 {
-    // initialize variable
-    int front[NMAXNODE][3];
-    int frontSize = edge->size();
+    //test if another node is inside the potential equilateral triangle
+    int    isInside = 0;
+    double minDistance = 9999.9;
 
-    int nodCounter = node->size();
-    int edgCounter = edge->size();
-    int elmCounter = 0;
-
-    // copy initial geometry inside front
-    buildFront(frontSize, front, edge);
-
-    //begin frontal triangulation
-    int N = 1;
-    for(int ifront = 0; ifront < N; ifront++)
+    for(int i=0; i < frontSize && activate[i] != 1; i++)
     {
+        int node0 = edge->getNode(front[i][0],0);
+        int node1 = edge->getNode(front[i][0],1);
 
-        int currPos = findSmallestEdgeIndex(frontSize, front);
-        int prevPos = front[currPos][1];
-        int nextPos = front[currPos][2];
+        if( (node0 != n0 && node0 != n1 && node0 != node->size()) && (node1 != n0 && node1 != n1 && node1 != node->size()) )
+        {
+            double x = node->getX(node0) - node->getX(node->size());
+            double y = node->getY(node0) - node->getY(node->size());
+            double R = .5*edge->length(currEdge);
 
-        int currEdge = front[currPos][0];
-        int prevEdge = front[prevPos][0];
-        int nextEdge = front[nextPos][0];
+            if(triangle->inCircle(n0, n1, node->size(), node0) || x*x + y*y < R*R)
+            {
 
+                if(node->distance(n0, node0) <= minDistance + 5.e-8)
+                {
+                    minDistance = node->distance(n0, node0);
+                    nodeIn = node0;
+                    edgeIn.push_back(front[i][0]);
+                }
 
+            }
 
-        std::cout << "  previous edge" << prevEdge << std::endl; //<< " (" << prevNode0 << "," << prevNode1 << ") left element is : " << edge->getLeftElement(prevPos) << std::endl;
-        std::cout << "  current  edge" << currEdge << std::endl; //<< " (" << currNode0 << "," << currNode1 << ") left element is : " << edge->getLeftElement(currPos) << std::endl;
-        std::cout << "  next     edge" << nextEdge << std::endl; //<< " (" << nextNode0 << "," << nextNode1 << ") left element is : " << edge->getLeftElement(nextPos) << std::endl;
+            x = node->getX(node1) - node->getX(node->size());
+            y = node->getY(node1) - node->getY(node->size());
+            R = .5*edge->length(currEdge);
 
+            if(triangle->inCircle(n0, n1, node->size(), node1) || x*x + y*y < R*R)
+            {
+                isInside = 1;
 
+                if(node->distance(n0, node1) <= minDistance)
+                {
+                    minDistance = node->distance(n0, node1);
+                    nodeIn = node1;
+                    edgeIn.push_back(front[i][0]);
+                }
+
+            }
+
+        }
 
     }
 
-
-
-
-
+//    std::cout<< "nearest node is " << nodeIn << std::endl;
+    return isInside;
 }
-
 
 
 double AdvancingFront::angle(double *vec_u, double *vec_v)
 {
 
-    double ez     = cross_product(vec_u, vec_v);
-    double theta0 = acos((dot_product(vec_u, vec_v)) / (norm(vec_u) * norm(vec_v)));
+    double ez       = cross_product(vec_u, vec_v);
+    double cosTheta = (dot_product(vec_u, vec_v)) / (norm(vec_u) * norm(vec_v));
+    double x;
 
-    if( - 1e-16 < theta0 && theta0 < 1e-16 ){
+    if ( -1.0+1.e-8 < cosTheta &&  cosTheta < -1.0-1.e-8)
+    {
+        x = -1.0;
+    }
+    else if(1.0-1.e-8 < cosTheta  &&  cosTheta < 1.0+1.e-8)
+    {
+        x = 1.0;
+//        std::cout << "enculé" << std::endl;
+    }
+    else
+    {
+        x = cosTheta;
+//        std::cout << "batard" << std::endl;
+//        std::cout << 1.0-1.e-16 << " < " << cosTheta  << " < " << 1.0+1.e-16 << std::endl;
+    }
+
+
+//    else if ((dot_product(vec_u, vec_v)) / (norm(vec_u) * norm(vec_v)) > 1.0) x = 1.0 ;
+
+    double theta0 = acos(x);
+
+
+//    std::cout << "dot_product = " << dot_product(vec_u, vec_v) << std::endl;
+//    std::cout << "norm_u = " << norm(vec_u) << std::endl;
+//    std::cout << "norm_v = " << norm(vec_v) << std::endl;
+//    std::cout << "cos(theta) = " << (dot_product(vec_u, vec_v)) / (norm(vec_u) * norm(vec_v)) << std::endl;
+//    std::cout << "theta = " << acos(x) << " " << x << std::endl;
+
+
+
+    if( - 1.e-16 < theta0 && theta0 < 1.e-16 ){
+//        std::cout << "return PI";
         return PI;
     }
-    else if( PI - 1e-16 < theta0 && theta0 < PI + 1e-16){
+    else if( PI - 1.e-16 < theta0 && theta0 < PI + 1.e-16){
+//        std::cout << "return 0.0";
         return 0.0;
     }
     else if( ez >= 0.0){
+//        std::cout << "return PI-theta";
         return PI - theta0;
     }
     else if( ez < 0.0){
+//        std::cout << "return PI+theta";
         return PI + theta0;
     }
 
@@ -849,5 +699,102 @@ double AdvancingFront::cross_product(double *vec_u, double *vec_v){
 double AdvancingFront::norm(double *vec){
 
     return sqrt( (vec[0]*vec[0]) + (vec[1]*vec[1]) );
+
+}
+
+void AdvancingFront::writeElement(int ielm)
+{
+    const std::string path = "../output/testMesh" + std::to_string(ielm) + ".vtk";
+    std::ofstream geoOut;
+    geoOut.open(path.c_str(), std::ios::out ); //ouverture du fichier en mode ecriture
+    geoOut  << std::setiosflags (std::ios::scientific) << std::setprecision(5);
+
+    geoOut << "# vtk DataFile Version 3.0" << std::endl;
+    geoOut << "testMesh" + std::to_string(ielm) << std::endl;
+    geoOut << "ASCII" << std::endl;
+    geoOut << "DATASET POLYDATA" << std::endl;
+    geoOut << "POINTS " << node->size() << " float"<< std::endl;
+
+    for (int i = 0; i < node->size(); i ++ ){
+         geoOut  << node->getX(i) << " " << node->getY(i) << " " << 0.0 << std::endl;
+    }
+
+    geoOut << std::endl;
+    geoOut << "VERTICES " << node->size() << " " << 2*node->size() << std::endl;
+
+    for (int i = 0; i < node->size(); i ++ ){
+         geoOut << 1 << " " << i << std::endl;
+
+    }
+
+    geoOut << std::endl;
+    geoOut << "LINES " << edge->size() << " " << 3*edge->size() << std::endl;
+
+    for (int i = 0; i < edge->size(); i ++ ){
+         geoOut << 2 << " " << edge->getNode(i,0) << " " << edge->getNode(i,1) << std::endl;
+
+    }
+
+}
+
+void AdvancingFront::writeMesh()
+{
+
+    const std::string path = "../output/testMesh_Finale.vtk";
+    std::ofstream geoOut;
+    geoOut.open(path.c_str(), std::ios::out ); //ouverture du fichier en mode ecriture
+    geoOut  << std::setiosflags (std::ios::scientific) << std::setprecision(5);
+
+    geoOut << "# vtk DataFile Version 3.0" << std::endl;
+    geoOut << "testMesh_finale" << std::endl;
+    geoOut << "ASCII" << std::endl;
+    geoOut << "DATASET UNSTRUCTURED_GRID" << std::endl;
+    geoOut << "POINTS " << node->size() << " float"<< std::endl;
+
+    for (int i = 0; i < node->size(); i ++ ){
+         geoOut  << node->getX(i) << " " << node->getY(i) << " " << 0.0 << std::endl;
+    }
+
+//    geoOut << std::endl;
+//    geoOut << "VERTICES " << node->size() << " " << 2*node->size() << std::endl;
+
+//    for (int i = 0; i < node->size(); i ++ ){
+//         geoOut << 1 << " " << i << std::endl;
+
+//    }
+
+//    geoOut << std::endl;
+//    geoOut << "LINES " << edge->size() << " " << 3*edge->size() << std::endl;
+
+//    for (int i = 0; i < edge->size(); i ++ ){
+//         geoOut << 2 << " " << edge->getNode(i,0) << " " << edge->getNode(i,1) << std::endl;
+
+//    }
+
+    geoOut << std::endl;
+    geoOut << "CELLS " << triangle->size() << " " << 4*triangle->size() << std::endl;
+
+    for (int i = 0; i < triangle->size(); i ++ ){
+        geoOut << 3 << " " << triangle->getNode(i, 0) << " " << triangle->getNode(i, 1) << " " << triangle->getNode(i, 2) << std::endl;
+
+    }
+
+
+    geoOut << std::endl;
+    geoOut << "CELL_TYPES " << triangle->size() << std::endl;
+    for (int i = 0; i < triangle->size(); i ++ ){
+         geoOut << 5 << std::endl;
+
+    }
+
+    geoOut << std::endl;
+    geoOut << "CELL_DATA " << triangle->size() << std::endl;
+    geoOut << "SCALARS INSIDE float" << std::endl;
+    geoOut << "LOOKUP_TABLE default " << std::endl;
+
+    for (int i = 0; i < triangle->size(); i ++ ){
+         geoOut << i << std::endl;
+
+    }
 
 }
