@@ -15,3 +15,4 @@ double Node::distance(int n0, int n1)
 {
     return sqrt((_x[n1] - _x[n0])*(_x[n1] - _x[n0]) + (_y[n1] - _y[n0])*(_y[n1] - _y[n0]));
 }
+
